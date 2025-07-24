@@ -1,9 +1,5 @@
-.. Foo documentation master file, created by
-   sphinx-quickstart on Mon Jul 21 22:05:54 2025.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+sgp40: Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements
+======================================================================
 
-Welcome to Foo's documentation!
-===============================
-
-.. doxygenfile:: template-component.h
+ .. doxygenfile:: sensirion_voc_algorithm.h
+ .. doxygenfile:: sgp40.h
