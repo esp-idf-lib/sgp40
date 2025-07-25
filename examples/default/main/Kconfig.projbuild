@@ -7,5 +7,5 @@ menu "Example configuration"
             grounded, choose 0x44. When ADDR pin is pulled up to VDD, choose
             0x45.
 
-    rsource "../../../../devtools/Kconfig.i2c"
+    rsource "../../../Kconfig.i2c"
 endmenu
