@@ -11,7 +11,7 @@ Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements.
 ## Installation
 
 ```sh
-idf.py add-dependency "esp-idf-lib/sgp40^1.0.0
+idf.py add-dependency esp-idf-lib/sgp40^1.0.0
 ```
 
 ## Support
