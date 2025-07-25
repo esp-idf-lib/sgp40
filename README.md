@@ -1,5 +1,9 @@
 # esp-idf-lib/sgp40
 
+[![Build examples](https://github.com/esp-idf-lib/sgp40/actions/workflows//build.yml/badge.svg)](https://github.com/esp-idf-lib/sgp40/actions/workflows//build.yml)
+[![Build docs](https://github.com/esp-idf-lib/sgp40/actions/workflows//build-docs.yml/badge.svg)](https://github.com/esp-idf-lib/sgp40/actions/workflows//build-docs.yml)
+[![Validation](https://github.com/esp-idf-lib/sgp40/actions/workflows//validate-component.yml/badge.svg)](https://github.com/esp-idf-lib/sgp40/actions/workflows//validate-component.yml)
+
 Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements.
 
 * [Documentation](https://esp-idf-lib.github.io/sgp40/)
@@ -11,7 +15,7 @@ Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements.
 ## Installation
 
 ```sh
-idf.py add-dependency esp-idf-lib/sgp40^1.0.0
+idf.py add-dependency esp-idf-lib/sgp40
 ```
 
 ## Support
