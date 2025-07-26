@@ -1,7 +1,7 @@
 ---
 name: sgp40
 description: Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements
-version: 1.0.2
+version: 1.0.3
 groups:
   - air-quality
 code_owners: UncleRus
