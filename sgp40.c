@@ -105,7 +105,7 @@ static esp_err_t read_resp(i2c_dev_t *dev, uint16_t *data, size_t words)
 }
 
 static esp_err_t execute_cmd(sgp40_t *dev, uint16_t cmd, uint32_t timeout_ms,
-        uint16_t *out_data, size_t out_words, uint16_t *in_data, size_t in_words)
+                             uint16_t *out_data, size_t out_words, uint16_t *in_data, size_t in_words)
 {
     CHECK_ARG(dev);
 
@@ -156,7 +156,7 @@ esp_err_t sgp40_init(sgp40_t *dev)
     CHECK(execute_cmd(dev, CMD_FEATURESET, TIME_FEATURESET, NULL, 0, &dev->featureset, 1));
 
     ESP_LOGD(TAG, "Device found. S/N: 0x%04x%04x%04x, featureset 0x%04x",
-            dev->serial[0], dev->serial[1], dev->serial[2], dev->featureset);
+             dev->serial[0], dev->serial[1], dev->serial[2], dev->featureset);
 
     VocAlgorithm_init(&dev->voc);
 

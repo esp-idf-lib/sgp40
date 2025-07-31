@@ -57,7 +57,7 @@ void task(void *pvParamters)
     ESP_ERROR_CHECK(sgp40_init_desc(&sgp, 0, CONFIG_EXAMPLE_I2C_MASTER_SDA, CONFIG_EXAMPLE_I2C_MASTER_SCL));
     ESP_ERROR_CHECK(sgp40_init(&sgp));
     ESP_LOGI(TAG, "SGP40 initilalized. Serial: 0x%04x%04x%04x",
-            sgp.serial[0], sgp.serial[1], sgp.serial[2]);
+             sgp.serial[0], sgp.serial[1], sgp.serial[2]);
 
     // Wait until all set up
     vTaskDelay(pdMS_TO_TICKS(250));
@@ -74,7 +74,7 @@ void task(void *pvParamters)
         ESP_ERROR_CHECK(sgp40_measure_voc(&sgp, humidity, temperature, &voc_index));
 
         ESP_LOGI(TAG, "%.2f °C, %.2f %%, VOC index: %" PRIi32 ", Air is [%s]",
-                temperature, humidity, voc_index, voc_index_name(voc_index));
+                 temperature, humidity, voc_index, voc_index_name(voc_index));
 
         // Wait until 1 seconds (VOC cycle time) are over.
         vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(1000));
