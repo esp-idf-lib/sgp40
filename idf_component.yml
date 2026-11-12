@@ -1,5 +1,5 @@
 ---
-version: 2.0.0
+version: 2.1.0
 description: Driver for SGP40 / SGP41 Indoor Air Quality Sensor for VOC (& NOx) Measurements
 license: BSD-3-Clause
 dependencies:
