@@ -129,12 +129,10 @@ static esp_err_t read_resp(i2c_dev_t *dev, uint16_t *data, size_t words)
     return ESP_OK;
 }
 
-static esp_err_t execute_cmd(sgp4x_t *dev, uint16_t cmd, uint32_t timeout_ms, uint16_t *out_data, size_t out_words, uint16_t *in_data, size_t in_words)
+// Sends the command and reads the response. The device mutex must be held by the caller
+static esp_err_t execute_cmd_locked(sgp4x_t *dev, uint16_t cmd, uint32_t timeout_ms, uint16_t *out_data, size_t out_words, uint16_t *in_data, size_t in_words)
 {
-    CHECK_ARG(dev);
-
-    I2C_DEV_TAKE_MUTEX(&dev->i2c_dev);
-    I2C_DEV_CHECK(&dev->i2c_dev, send_cmd(&dev->i2c_dev, cmd, out_data, out_words));
+    CHECK(send_cmd(&dev->i2c_dev, cmd, out_data, out_words));
     if (timeout_ms)
     {
         if (timeout_ms > 10)
@@ -143,10 +141,20 @@ static esp_err_t execute_cmd(sgp4x_t *dev, uint16_t cmd, uint32_t timeout_ms, ui
             ets_delay_us(timeout_ms * 1000);
     }
     if (in_data && in_words)
-        I2C_DEV_CHECK(&dev->i2c_dev, read_resp(&dev->i2c_dev, in_data, in_words));
-    I2C_DEV_GIVE_MUTEX(&dev->i2c_dev);
+        CHECK(read_resp(&dev->i2c_dev, in_data, in_words));
 
     return ESP_OK;
+}
+
+static esp_err_t execute_cmd(sgp4x_t *dev, uint16_t cmd, uint32_t timeout_ms, uint16_t *out_data, size_t out_words, uint16_t *in_data, size_t in_words)
+{
+    CHECK_ARG(dev);
+
+    I2C_DEV_TAKE_MUTEX(&dev->i2c_dev);
+    esp_err_t err = execute_cmd_locked(dev, cmd, timeout_ms, out_data, out_words, in_data, in_words);
+    I2C_DEV_GIVE_MUTEX(&dev->i2c_dev);
+
+    return err;
 }
 
 static esp_err_t convert_temperature_and_humidity(float humidity, float temperature, uint16_t *params)
@@ -272,31 +280,38 @@ esp_err_t sgp4x_start_conditioning(sgp4x_t *dev, float humidity, float temperatu
     return execute_cmd(dev, CMD_SGP41_CONDITIONING, TIME_SGP41_MEASURE_RAW, params, 2, raw_voc, 1);
 }
 
+// Measures the raw values. The device mutex must be held by the caller
+static esp_err_t measure_raw_locked(sgp4x_t *dev, float humidity, float temperature, uint16_t *raw_voc, uint16_t *raw_nox)
+{
+    uint16_t params[2];
+    CHECK(convert_temperature_and_humidity(humidity, temperature, params));
+
+    if (dev->type == SGP4x_TYPE_SGP40)
+        return execute_cmd_locked(dev, CMD_SGP40_MEASURE_RAW, TIME_SGP40_MEASURE_RAW, params, 2, raw_voc, 1);
+
+    if (dev->type == SGP4x_TYPE_SGP41)
+    {
+        uint16_t results[2];
+        CHECK(execute_cmd_locked(dev, CMD_SGP41_MEASURE_RAW, TIME_SGP41_MEASURE_RAW, params, 2, results, 2));
+        *raw_voc = results[0];
+        *raw_nox = results[1];
+        return ESP_OK;
+    }
+
+    return ESP_FAIL;
+}
+
 esp_err_t sgp4x_measure_raw(sgp4x_t *dev, float humidity, float temperature, uint16_t *raw_voc, uint16_t *raw_nox)
 {
     CHECK_ARG(dev && raw_voc);
     if (dev->type == SGP4x_TYPE_SGP41)
         CHECK_ARG(raw_nox);
 
-    uint16_t params[2];
-    CHECK(convert_temperature_and_humidity(humidity, temperature, params));
+    I2C_DEV_TAKE_MUTEX(&dev->i2c_dev);
+    esp_err_t err = measure_raw_locked(dev, humidity, temperature, raw_voc, raw_nox);
+    I2C_DEV_GIVE_MUTEX(&dev->i2c_dev);
 
-    if (dev->type == SGP4x_TYPE_SGP40)
-        return execute_cmd(dev, CMD_SGP40_MEASURE_RAW, TIME_SGP40_MEASURE_RAW, params, 2, raw_voc, 1);
-
-    if (dev->type == SGP4x_TYPE_SGP41)
-    {
-        uint16_t results[2];
-        esp_err_t err = execute_cmd(dev, CMD_SGP41_MEASURE_RAW, TIME_SGP41_MEASURE_RAW, params, 2, results, 2);
-        if (err == ESP_OK)
-        {
-            *raw_voc = results[0];
-            *raw_nox = results[1];
-        }
-        return err;
-    }
-
-    return ESP_FAIL;
+    return err;
 }
 
 esp_err_t sgp4x_measure_index(sgp4x_t *dev, float humidity, float temperature, int32_t *voc_index, int32_t *nox_index)
@@ -305,12 +320,20 @@ esp_err_t sgp4x_measure_index(sgp4x_t *dev, float humidity, float temperature, i
     if (dev->type == SGP4x_TYPE_SGP41)
         CHECK_ARG(nox_index);
 
-    uint16_t raw_voc;
-    uint16_t raw_nox;
-    CHECK(sgp4x_measure_raw(dev, humidity, temperature, &raw_voc, &raw_nox));
-    GasIndexAlgorithm_process(&dev->voc, raw_voc, voc_index);
-    if (dev->type == SGP4x_TYPE_SGP41)
-        GasIndexAlgorithm_process(&dev->nox, raw_nox, nox_index);
+    // The measurement and the algorithm run under the same lock: the algorithm keeps
+    // its state in the descriptor, so two tasks must not use it at the same time
+    I2C_DEV_TAKE_MUTEX(&dev->i2c_dev);
 
-    return ESP_OK;
+    uint16_t raw_voc, raw_nox;
+    esp_err_t err = measure_raw_locked(dev, humidity, temperature, &raw_voc, &raw_nox);
+    if (err == ESP_OK)
+    {
+        GasIndexAlgorithm_process(&dev->voc, raw_voc, voc_index);
+        if (dev->type == SGP4x_TYPE_SGP41)
+            GasIndexAlgorithm_process(&dev->nox, raw_nox, nox_index);
+    }
+
+    I2C_DEV_GIVE_MUTEX(&dev->i2c_dev);
+
+    return err;
 }
