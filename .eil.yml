@@ -1,7 +1,7 @@
 ---
 name: sgp40
-description: Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements
-version: 1.0.8
+description: Driver for SGP40 / SGP41 Indoor Air Quality Sensor for VOC (& NOx) Measurements
+version: 2.0.0
 groups:
   - air-quality
 code_owners: UncleRus
@@ -14,3 +14,5 @@ license: BSD-3-Clause
 copyrights:
   - name: UncleRus
     year: 2020
+  - name: botastic
+    year: 2025

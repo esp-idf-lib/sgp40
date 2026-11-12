@@ -1,6 +1,7 @@
 examples/**/sdkconfig
 examples/**/sdkconfig.old
 examples/**/build/
+examples/**/.cache/
 examples/**/dependencies.lock
 examples/**/managed_components/
 docs/_*/

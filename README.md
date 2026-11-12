@@ -4,13 +4,13 @@
 [![Build docs](https://github.com/esp-idf-lib/sgp40/actions/workflows//build-docs.yml/badge.svg)](https://github.com/esp-idf-lib/sgp40/actions/workflows//build-docs.yml)
 [![Validation](https://github.com/esp-idf-lib/sgp40/actions/workflows//validate-component.yml/badge.svg)](https://github.com/esp-idf-lib/sgp40/actions/workflows//validate-component.yml)
 
-Driver for SGP40 Indoor Air Quality Sensor for VOC Measurements.
+Driver for SGP40 / SGP41 Indoor Air Quality Sensor for VOC (& NOx) Measurements.
 
-* [Documentation](https://esp-idf-lib.github.io/sgp40/)
-* [Repository](https://github.com/esp-idf-lib/sgp40)
-* [Issues](https://github.com/esp-idf-lib/sgp40/issues)
-* [Discussions and questions](https://github.com/esp-idf-lib/core/discussions)
-* [Component page at the ESP Component Registry](https://components.espressif.com/components/esp-idf-lib/sgp40)
+- [Documentation](https://esp-idf-lib.github.io/sgp40/)
+- [Repository](https://github.com/esp-idf-lib/sgp40)
+- [Issues](https://github.com/esp-idf-lib/sgp40/issues)
+- [Discussions and questions](https://github.com/esp-idf-lib/core/discussions)
+- [Component page at the ESP Component Registry](https://components.espressif.com/components/esp-idf-lib/sgp40)
 
 ## Installation
 
