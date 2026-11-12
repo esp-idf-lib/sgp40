@@ -293,9 +293,6 @@ static esp_err_t measure_raw_locked(sgp4x_t *dev, float humidity, float temperat
     if (dev->type == SGP4x_TYPE_SGP40)
         return execute_cmd_locked(dev, CMD_SGP40_MEASURE_RAW, TIME_SGP40_MEASURE_RAW, params, 2, raw_voc, 1);
 
-    if (dev->type != SGP4x_TYPE_SGP41)
-        return ESP_ERR_NOT_SUPPORTED;
-
     uint16_t results[2];
     CHECK(execute_cmd_locked(dev, CMD_SGP41_MEASURE_RAW, TIME_SGP41_MEASURE_RAW, params, 2, results, 2));
     *raw_voc = results[0];
