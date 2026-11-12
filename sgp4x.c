@@ -21,6 +21,7 @@
 
 static const char *TAG = "sgp4x";
 
+#define CMD_SOFT_RESET         0x0006
 #define CMD_FEATURESET         0x202f
 #define CMD_SGP40_MEASURE_RAW  0x260f
 #define CMD_SGP41_MEASURE_RAW  0x2619
@@ -29,6 +30,7 @@ static const char *TAG = "sgp4x";
 #define CMD_SERIAL             0x3682
 #define CMD_HEATER_OFF         0x3615
 
+#define TIME_SOFT_RESET        10
 #define TIME_FEATURESET        10
 #define TIME_SGP40_MEASURE_RAW 30
 #define TIME_SGP41_MEASURE_RAW 50
@@ -211,6 +213,15 @@ esp_err_t sgp4x_free_desc(sgp4x_t *dev)
     CHECK_ARG(dev);
 
     return i2c_dev_delete_mutex(&dev->i2c_dev);
+}
+
+esp_err_t sgp4x_soft_reset(sgp4x_t *dev)
+{
+    CHECK_ARG(dev);
+
+    // The datasheets call this command a general call, but it is sent to the device
+    // address here, so the other devices on the bus stay untouched
+    return execute_cmd(dev, CMD_SOFT_RESET, TIME_SOFT_RESET, NULL, 0, NULL, 0);
 }
 
 esp_err_t sgp4x_init(sgp4x_t *dev)

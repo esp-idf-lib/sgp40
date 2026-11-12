@@ -67,6 +67,19 @@ esp_err_t sgp4x_init_desc(sgp4x_t *dev, sgp4x_type_t type, i2c_port_t port, gpio
 esp_err_t sgp4x_free_desc(sgp4x_t *dev);
 
 /**
+ * @brief Reset the sensor and put it back to idle mode
+ *
+ * The datasheets describe `0x0006` as an I2C general call that resets every
+ * device on the bus. Here the command is sent to the device address, so the
+ * other devices are not affected.
+ *
+ * @param dev Device descriptor
+ * @return `ESP_OK` on success
+ * @return `ESP_ERR_TIMEOUT` if the device does not respond
+ */
+esp_err_t sgp4x_soft_reset(sgp4x_t *dev);
+
+/**
  * @brief Read device information, initialize the VOC algorithm
  *
  * @param dev Device descriptor
