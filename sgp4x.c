@@ -150,22 +150,24 @@ static esp_err_t convert_temperature_and_humidity(float humidity, float temperat
         params[0] = 0x8000;
         params[1] = 0x6666;
         ESP_LOGW(TAG, "Uncompensated measurement");
+        return ESP_OK;
     }
-    else
+
+    // See table 10 "Conversion of relative humidity in % and temperature in °C into ticks"
+    // of the SGP40 and the SGP41 datasheets
+    if (humidity < 0.0 || humidity > 100.0)
     {
-        if (humidity < 0)
-            humidity = 0;
-        else if (humidity > 100)
-            humidity = 100;
-
-        if (temperature < -45)
-            temperature = -45;
-        else if (temperature > 129.76)
-            temperature = 129.76;
-
-        params[0] = (uint16_t)(humidity / 100.0 * 65536);
-        params[1] = (uint16_t)((temperature + 45) / 175.0 * 65535);
+        ESP_LOGE(TAG, "Humidity %.2f %% is out of the range 0..100", humidity);
+        return ESP_ERR_INVALID_ARG;
     }
+    if (temperature < -45.0 || temperature > 130.0)
+    {
+        ESP_LOGE(TAG, "Temperature %.2f °C is out of the range -45..130", temperature);
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    params[0] = (uint16_t)(humidity / 100.0 * 65535.0);
+    params[1] = (uint16_t)((temperature + 45.0) / 175.0 * 65535.0);
 
     return ESP_OK;
 }
