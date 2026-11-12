@@ -215,24 +215,18 @@ esp_err_t sgp4x_free_desc(sgp4x_t *dev)
 esp_err_t sgp4x_init(sgp4x_t *dev)
 {
     CHECK_ARG(dev);
+    if (dev->type != SGP4x_TYPE_SGP40 && dev->type != SGP4x_TYPE_SGP41)
+    {
+        ESP_LOGE(TAG, "Unknown device type 0x%0X", dev->type);
+        return ESP_ERR_NOT_SUPPORTED;
+    }
 
     CHECK(execute_cmd(dev, CMD_SERIAL, TIME_SERIAL, NULL, 0, dev->serial, 3));
     CHECK(execute_cmd(dev, CMD_FEATURESET, TIME_FEATURESET, NULL, 0, &dev->featureset, 1));
 
-    if (dev->type == SGP4x_TYPE_SGP40)
-    {
-        GasIndexAlgorithm_init(&dev->voc, GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
-    }
-    else if (dev->type == SGP4x_TYPE_SGP41)
-    {
-        GasIndexAlgorithm_init(&dev->voc, GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
+    GasIndexAlgorithm_init(&dev->voc, GasIndexAlgorithm_ALGORITHM_TYPE_VOC);
+    if (dev->type == SGP4x_TYPE_SGP41)
         GasIndexAlgorithm_init(&dev->nox, GasIndexAlgorithm_ALGORITHM_TYPE_NOX);
-    }
-    else
-    {
-        ESP_LOGE(TAG, "Unknown device type 0x%0X", dev->type);
-        return ESP_FAIL;
-    }
 
     ESP_LOGD(TAG, "Device found. S/N: 0x%04x%04x%04x, featureset 0x%04x", dev->serial[0], dev->serial[1], dev->serial[2], dev->featureset);
 
@@ -244,18 +238,16 @@ esp_err_t sgp4x_self_test(sgp4x_t *dev)
     CHECK_ARG(dev);
 
     uint16_t res;
+    if (dev->type != SGP4x_TYPE_SGP40 && dev->type != SGP4x_TYPE_SGP41)
+        return ESP_ERR_NOT_SUPPORTED;
+
     CHECK(execute_cmd(dev, CMD_SELF_TEST, dev->type == SGP4x_TYPE_SGP40 ? TIME_SGP40_SELF_TEST : TIME_SGP41_SELF_TEST, NULL, 0, &res, 1));
 
     if (dev->type == SGP4x_TYPE_SGP40)
-    {
         return res == SGP40_SELF_TEST_OK ? ESP_OK : ESP_FAIL;
-    }
-    if (dev->type == SGP4x_TYPE_SGP41)
-    {
-        res &= 0x0003;
-        return res == SGP41_SELF_TEST_OK ? ESP_OK : ESP_FAIL;
-    }
-    return ESP_FAIL;
+
+    res &= 0x0003;
+    return res == SGP41_SELF_TEST_OK ? ESP_OK : ESP_FAIL;
 }
 
 esp_err_t sgp4x_heater_off(sgp4x_t *dev)
@@ -271,7 +263,7 @@ esp_err_t sgp4x_start_conditioning(sgp4x_t *dev, float humidity, float temperatu
     if (dev->type != SGP4x_TYPE_SGP41)
     {
         ESP_LOGE(TAG, "Conditioning is only supported for SGP41");
-        return ESP_FAIL;
+        return ESP_ERR_NOT_SUPPORTED;
     }
 
     uint16_t params[2];
@@ -289,16 +281,15 @@ static esp_err_t measure_raw_locked(sgp4x_t *dev, float humidity, float temperat
     if (dev->type == SGP4x_TYPE_SGP40)
         return execute_cmd_locked(dev, CMD_SGP40_MEASURE_RAW, TIME_SGP40_MEASURE_RAW, params, 2, raw_voc, 1);
 
-    if (dev->type == SGP4x_TYPE_SGP41)
-    {
-        uint16_t results[2];
-        CHECK(execute_cmd_locked(dev, CMD_SGP41_MEASURE_RAW, TIME_SGP41_MEASURE_RAW, params, 2, results, 2));
-        *raw_voc = results[0];
-        *raw_nox = results[1];
-        return ESP_OK;
-    }
+    if (dev->type != SGP4x_TYPE_SGP41)
+        return ESP_ERR_NOT_SUPPORTED;
 
-    return ESP_FAIL;
+    uint16_t results[2];
+    CHECK(execute_cmd_locked(dev, CMD_SGP41_MEASURE_RAW, TIME_SGP41_MEASURE_RAW, params, 2, results, 2));
+    *raw_voc = results[0];
+    *raw_nox = results[1];
+
+    return ESP_OK;
 }
 
 esp_err_t sgp4x_measure_raw(sgp4x_t *dev, float humidity, float temperature, uint16_t *raw_voc, uint16_t *raw_nox)
@@ -306,6 +297,8 @@ esp_err_t sgp4x_measure_raw(sgp4x_t *dev, float humidity, float temperature, uin
     CHECK_ARG(dev && raw_voc);
     if (dev->type == SGP4x_TYPE_SGP41)
         CHECK_ARG(raw_nox);
+    if (dev->type != SGP4x_TYPE_SGP40 && dev->type != SGP4x_TYPE_SGP41)
+        return ESP_ERR_NOT_SUPPORTED;
 
     I2C_DEV_TAKE_MUTEX(&dev->i2c_dev);
     esp_err_t err = measure_raw_locked(dev, humidity, temperature, raw_voc, raw_nox);
@@ -319,6 +312,8 @@ esp_err_t sgp4x_measure_index(sgp4x_t *dev, float humidity, float temperature, i
     CHECK_ARG(dev && voc_index);
     if (dev->type == SGP4x_TYPE_SGP41)
         CHECK_ARG(nox_index);
+    if (dev->type != SGP4x_TYPE_SGP40 && dev->type != SGP4x_TYPE_SGP41)
+        return ESP_ERR_NOT_SUPPORTED;
 
     // The measurement and the algorithm run under the same lock: the algorithm keeps
     // its state in the descriptor, so two tasks must not use it at the same time
