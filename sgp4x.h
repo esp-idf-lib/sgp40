@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "sensirion_gas_index_algorithm.h"
-#include "i2cdev.h"
+#include <i2cdev.h>
 #include <esp_err.h>
 
 #ifdef __cplusplus
