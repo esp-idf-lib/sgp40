@@ -74,22 +74,30 @@ static uint8_t crc8(const uint8_t *data, size_t count)
     return res;
 }
 
-static inline uint16_t swap(uint16_t v)
+// The sensor uses big-endian words, the buffer is a byte array: the words are
+// composed and decomposed byte by byte to avoid an unaligned access
+static inline void put_u16be(uint8_t *p, uint16_t v)
 {
-    return (v << 8) | (v >> 8);
+    p[0] = (uint8_t)(v >> 8);
+    p[1] = (uint8_t)v;
+}
+
+static inline uint16_t get_u16be(const uint8_t *p)
+{
+    return ((uint16_t)p[0] << 8) | p[1];
 }
 
 static esp_err_t send_cmd(i2c_dev_t *dev, uint16_t cmd, uint16_t *data, size_t words)
 {
     uint8_t buf[2 + words * 3];
     // add command
-    *(uint16_t *)buf = swap(cmd);
+    put_u16be(buf, cmd);
     if (data && words)
         // add arguments
         for (size_t i = 0; i < words; i++)
         {
             uint8_t *p = buf + 2 + i * 3;
-            *(uint16_t *)p = swap(data[i]);
+            put_u16be(p, data[i]);
             *(p + 2) = crc8(p, 2);
         }
 
@@ -116,7 +124,7 @@ static esp_err_t read_resp(i2c_dev_t *dev, uint16_t *data, size_t words)
             ESP_LOGE(TAG, "Invalid CRC 0x%02x, expected 0x%02x", crc, *(p + 2));
             return ESP_ERR_INVALID_CRC;
         }
-        data[i] = swap(*(uint16_t *)p);
+        data[i] = get_u16be(p);
     }
     return ESP_OK;
 }
