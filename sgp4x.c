@@ -193,6 +193,7 @@ static esp_err_t convert_temperature_and_humidity(float humidity, float temperat
 esp_err_t sgp4x_init_desc(sgp4x_t *dev, sgp4x_type_t type, i2c_port_t port, gpio_num_t sda_gpio, gpio_num_t scl_gpio)
 {
     CHECK_ARG(dev);
+    CHECK_ARG(type == SGP4x_TYPE_SGP40 || type == SGP4x_TYPE_SGP41);
 
     dev->type = type;
     dev->i2c_dev.port = port;
